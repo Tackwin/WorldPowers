@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -29,7 +29,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -69,13 +69,33 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>$(ProjectDir)src\;$(IncludePath)</IncludePath>
+    <SourcePath>$(ProjectDir)include\;$(SourcePath)</SourcePath>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>$(ProjectDir)src\;$(IncludePath)</IncludePath>
+    <SourcePath>$(ProjectDir)include\;$(SourcePath)</SourcePath>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <MultiProcessorCompilation>false</MultiProcessorCompilation>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <EnableModules>true</EnableModules>
+      <AdditionalIncludeDirectories>C:\Code\cpp\EnTT\src;C:\Code\cpp\SFML\include;C:\Code\cpp\boost_1_66_0\include;C:\Code\cpp\imgui</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SFML_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>C:\Code\cpp\SFML\build\lib\$(Configuration);C:\Code\cpp\SFML\extlibs\libs-msvc\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sfml-graphics-s-d.lib;sfml-system-s-d.lib;sfml-window-s-d.lib;sfml-audio-s-d.lib;flac.lib;winmm.lib;vorbisenc.lib;vorbisfile.lib;vorbis.lib;ogg.lib;freetype.lib;openal32.lib;opengl32.lib;jpeg.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkStatus>false</LinkStatus>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -86,15 +106,23 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <EnableModules>true</EnableModules>
+      <AdditionalIncludeDirectories>C:\Code\cpp\EnTT\src;C:\Code\cpp\SFML\include;C:\Code\cpp\boost_1_66_0\include;C:\Code\cpp\imgui</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>SFML_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>C:\Code\cpp\SFML\build\lib\$(Configuration);C:\Code\cpp\SFML\extlibs\libs-msvc\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sfml-graphics-s.lib;sfml-system-s.lib;sfml-window-s.lib;sfml-audio-s.lib;flac.lib;winmm.lib;vorbisenc.lib;vorbisfile.lib;vorbis.lib;ogg.lib;freetype.lib;openal32.lib;opengl32.lib;jpeg.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkStatus>false</LinkStatus>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -111,6 +139,77 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\imgui\imgui-SFML.cpp" />
+    <ClCompile Include="..\..\imgui\imgui.cpp" />
+    <ClCompile Include="..\..\imgui\imgui_draw.cpp" />
+    <ClCompile Include="src\3rd\FastNoise.cpp" />
+    <ClCompile Include="src\3rd\jc_voronoi.c" />
+    <ClCompile Include="src\Common.cpp" />
+    <ClCompile Include="src\Data\Datum.cpp" />
+    <ClCompile Include="src\Map\Canton.cpp" />
+    <ClCompile Include="src\Math\Polygon.cpp" />
+    <ClCompile Include="src\Scenes\MapScene.cpp" />
+    <ClCompile Include="src\Game\Game.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="src\Managers\AssetsManager.cpp" />
+    <ClCompile Include="src\Managers\EventManager.cpp" />
+    <ClCompile Include="src\Managers\InputsManager.cpp" />
+    <ClCompile Include="src\Managers\MemoryManager.cpp" />
+    <ClCompile Include="src\Managers\TimerManager.cpp" />
+    <ClCompile Include="src\Map\Map.cpp" />
+    <ClCompile Include="src\Math\Algorithm.cpp" />
+    <ClCompile Include="src\Math\Triangle.cpp" />
+    <ClCompile Include="src\Scenes\Scene.cpp" />
+    <ClCompile Include="src\Structures\QuadTree.cpp" />
+    <ClCompile Include="src\Time\Clock.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\3rd\FastNoise.h" />
+    <ClInclude Include="src\3rd\jc_voronoi.h" />
+    <ClInclude Include="src\Data\Datum.hpp" />
+    <ClInclude Include="src\Game\ID.hpp" />
+    <ClInclude Include="src\Map\Canton.hpp" />
+    <ClInclude Include="src\Math\Polygon.hpp" />
+    <ClInclude Include="src\Scenes\MapScene.hpp" />
+    <ClInclude Include="src\Game\Game.hpp" />
+    <ClInclude Include="include\3rd\json.hpp" />
+    <ClInclude Include="include\BoostType.hpp" />
+    <ClInclude Include="include\Common.hpp" />
+    <ClInclude Include="include\Managers\AssetsManager.hpp" />
+    <ClInclude Include="include\Managers\EventManager.hpp" />
+    <ClInclude Include="include\Managers\InputsManager.hpp" />
+    <ClInclude Include="include\Managers\MemoryManager.hpp" />
+    <ClInclude Include="include\Managers\TimerManager.hpp" />
+    <ClInclude Include="include\map\Map.hpp" />
+    <ClInclude Include="include\Math\Algorithm.hpp" />
+    <ClInclude Include="include\Math\Graph.hpp" />
+    <ClInclude Include="include\Math\Rectangle.hpp" />
+    <ClInclude Include="include\Math\Segment.hpp" />
+    <ClInclude Include="include\Math\Triangle.hpp" />
+    <ClInclude Include="include\Math\Vector.hpp" />
+    <ClInclude Include="include\Scenes\Scene.hpp" />
+    <ClInclude Include="include\Structures\QuadTree.hpp" />
+    <ClInclude Include="include\Time\Clock.hpp" />
+    <ClInclude Include="src\3rd\json.hpp" />
+    <ClInclude Include="src\Common.hpp" />
+    <ClInclude Include="src\Managers\AssetsManager.hpp" />
+    <ClInclude Include="src\Managers\EventManager.hpp" />
+    <ClInclude Include="src\Managers\InputsManager.hpp" />
+    <ClInclude Include="src\Managers\MemoryManager.hpp" />
+    <ClInclude Include="src\Managers\TimerManager.hpp" />
+    <ClInclude Include="src\Map\Map.hpp" />
+    <ClInclude Include="src\Math\Algorithm.hpp" />
+    <ClInclude Include="src\Math\Graph.hpp" />
+    <ClInclude Include="src\Math\Rectangle.hpp" />
+    <ClInclude Include="src\Math\Segment.hpp" />
+    <ClInclude Include="src\Math\Triangle.hpp" />
+    <ClInclude Include="src\Math\Vector.hpp" />
+    <ClInclude Include="src\Scenes\Scene.hpp" />
+    <ClInclude Include="src\Structures\QuadTree.hpp" />
+    <ClInclude Include="src\Time\Clock.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".clang-tidy" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
