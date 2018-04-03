@@ -6,6 +6,7 @@
 #include "./../Game/ID.hpp"
 #include "./../Math/Algorithm.hpp"
 #include "./../Managers/InputsManager.hpp"
+#include "./../Time/Clock.hpp"
 
 Map::Map(Vector2d size) {
 	_info.size = size;
@@ -22,13 +23,14 @@ void Map::build(double poisson_r) {
 	if (isBuilded()) {
 		clear();
 	}
+	Clock perf;
 	_info.builded = true;
 
-	generateVoronoi(poisson_r);
 	generateNoise();
+	generateVoronoi(poisson_r);
 
 	computeTextureElevation(1);
-	computeElevation();
+	std::cout << perf.elapsed() << std::endl;
 }
 
 void Map::render(sf::RenderTarget& target, Map::RenderFlags flag) const {
@@ -149,14 +151,14 @@ void Map::generateVoronoi(double r) {
 		Tripoint A;
 		Tripoint B;
 
-		A.pos = { edge->pos[0].x, edge->pos[0].y };
-		B.pos = { edge->pos[1].x, edge->pos[1].y };
+		A.pos = Vector2d{ edge->pos[0].x, edge->pos[0].y }.round(0.00001);
+		B.pos = Vector2d{ edge->pos[1].x, edge->pos[1].y }.round(0.00001);
 
-		tripointMapIndex[A.pos] = A.id;
-		tripointMapIndex[B.pos] = B.id;
+		tripointMapIndex.emplace(A.pos, A.id);
+		tripointMapIndex.emplace(B.pos, B.id);
 
-		_info.tripoints[A.id] = A;
-		_info.tripoints[B.id] = B;
+		_info.tripoints.emplace(A.id, A);
+		_info.tripoints.emplace(B.id, B);
 
 		edge = edge->next;
 	}
@@ -164,15 +166,19 @@ void Map::generateVoronoi(double r) {
 	edge = jcv_diagram_get_edges(&_info.diagram);
 	while (edge) {
 		Frontier F;
-		auto A = tripointMapIndex.at(Vector2d{ edge->pos[0].x, edge->pos[0].y });
-		auto B = tripointMapIndex.at(Vector2d{ edge->pos[1].x, edge->pos[1].y });
+		auto A = tripointMapIndex.at(
+			Vector2d{ edge->pos[0].x, edge->pos[0].y }.round(0.00001)
+		);
+		auto B = tripointMapIndex.at(
+			Vector2d{ edge->pos[1].x, edge->pos[1].y }.round(0.00001)
+		);
 
 		F.tripoints.first = A;
 		F.tripoints.second = B;
 
-		tripontsToFrontierMap[std::minmax({A, B})] = F.id;
+		tripontsToFrontierMap.emplace(std::minmax({A, B}), F.id);
 
-		_info.frontiers[F.id] = F;
+		_info.frontiers.emplace(F.id, F);
 
 		_info.tripoints.at(A).frontiers.emplace(F.id);
 		_info.tripoints.at(B).frontiers.emplace(F.id);
@@ -184,13 +190,20 @@ void Map::generateVoronoi(double r) {
 		Canton c(this);
 
 		auto s = &sites[i];
-		std::unordered_set<Vector2d> ver;
-		c.setSite({ s->p.x, s->p.y });
+		c.setSite(Vector2d{ s->p.x, s->p.y }.round(0.00001));
+
+		auto elevation = getElevation(c.getSite());
+		c.setElevation(elevation);
+
+		auto comp = [s = c.getSite()](const Vector2d& A, const Vector2d& B) -> bool {
+			return s.pseudoAngleTo(A) < s.pseudoAngleTo(B);
+		};
+		std::set<Vector2d, decltype(comp)> cantonVertices(comp);
 
 		auto const* e = s->edges;
 		while (e) {
-			auto A = Vector2d{ e->edge->pos[0].x, e->edge->pos[0].y };
-			auto B = Vector2d{ e->edge->pos[1].x, e->edge->pos[1].y };
+			auto A = Vector2d{ e->edge->pos[0].x, e->edge->pos[0].y }.round(0.00001);
+			auto B = Vector2d{ e->edge->pos[1].x, e->edge->pos[1].y }.round(0.00001);
 
 			auto Aid = tripointMapIndex.at(A);
 			auto Bid = tripointMapIndex.at(B);
@@ -208,18 +221,21 @@ void Map::generateVoronoi(double r) {
 				F.first = c.id();
 			}
 
-			ver.insert(A);
-			ver.insert(B);
+			cantonVertices.emplace(A);
+			cantonVertices.emplace(B);
 			c.addFrontier(Fid);
 			e = e->next;
 		}
 
-		Polygon<double> p(std::vector<Vector2d>(std::begin(ver), std::end(ver)));
+
+		Polygon<double> p;
+		p.vertices = std::vector<Vector2d>(
+			std::begin(cantonVertices), std::end(cantonVertices)
+		);
 		c.setEdges(p);
 
 		_info.cantons[c.id()] = c;
 	}
-	printf("");
 }
 
 void Map::generateNoise() {
@@ -316,13 +332,6 @@ Vector2d Map::screenToMap(Vector2d p) const {
 	normalized.y = +1.0 - 2.0 * (scaledP.y - viewport.top) / viewport.height;
 
 	return Vector2d(_view.getInverseTransform().transformPoint(normalized));
-}
-
-void Map::computeElevation() noexcept {
-	for (auto&[_, c] : _info.cantons) {_;
-		auto e = getElevation(c.getSite());
-		c.setElevation(e);
-	}
 }
 
 const Canton& Map::getCanton(ID id) const {

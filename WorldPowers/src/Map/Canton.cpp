@@ -22,16 +22,6 @@ Canton::Canton(Map* map) : _map(map), _id(ID::construct()) {
 
 void Canton::addFrontier(ID id) {
 	_frontiers.emplace(id);
-	auto& i = xstd::other_one_pair(_map->getFrontier(id).cantons, _id);
-	
-	if (! (bool)_downhill) {
-		_downhill = i;
-	} else if (
-		(bool)i && 
-		_map->getCanton(_downhill).getElevation() > _map->getCanton(i).getElevation()
-	) {
-		_downhill = i;
-	}
 }
 
 void Canton::setEdges(const Polygon<double>& edges) {
@@ -66,10 +56,10 @@ void Canton::render(sf::RenderTarget& target) const {
 	_edges.render(target, in, out, 0.1f);
 }
 void Canton::renderDownhill(sf::RenderTarget& target) const noexcept {
-	if ((bool)_downhill) {
-		auto dt = (_map->getCanton(_downhill).getSite() - getSite());
+	if ((bool)getDownhill()) {
+		auto dt = (_map->getCanton(getDownhill()).getSite() - getSite());
 		dt.drawArrow(
-			target, _edges.boundingBox().h * 0.02f, { 0.7, 0.1, 0.1, 0.7 }, getSite()
+			target, (float)_edges.boundingBox().h * 0.02f, { 0.7, 0.1, 0.1, 0.7 }, getSite()
 		);
 	}
 }
@@ -99,4 +89,22 @@ double Canton::getElevation() const noexcept {
 }
 void Canton::setElevation(double elevation) noexcept {
 	_elevation = elevation;
+}
+void Canton::computeDownhill() const noexcept {
+	if (_frontiers.empty()) return;
+	auto minmax = std::minmax_element(std::begin(_frontiers), std::end(_frontiers), 
+		[&](ID A, ID B) -> bool {
+			auto cA = xstd::other_one_pair(_map->getFrontier(A).cantons, id());
+			auto cB = xstd::other_one_pair(_map->getFrontier(B).cantons, id());
+			return _map->getCanton(cA).getElevation() < _map->getCanton(cB).getElevation();
+		}
+	);
+
+	auto min = xstd::other_one_pair(_map->getFrontier(*minmax.first).cantons, id());
+	if (_map->getCanton(min).getElevation() < getElevation()) _downhill = min;
+}
+
+ID Canton::getDownhill() const noexcept {
+	if (!_downhill) computeDownhill();
+	return _downhill;
 }

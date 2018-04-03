@@ -58,7 +58,6 @@ private:
 	void generateVoronoi(double r);
 	void generateNoise();
 
-	void computeElevation() noexcept;
 	void computeTextureElevation(double LOD);
 
 	void renderDownhill(sf::RenderTarget& target) const noexcept;

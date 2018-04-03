@@ -232,13 +232,37 @@ struct Vector : public __vec_member<D, T> {
 	}
 
 	template<size_t Dp = D>
-	std::enable_if_t<Dp == 2, double> angleX() const {
+	std::enable_if_t<Dp == 2, double> angleX() const noexcept {
 		return std::atan2(this->y, this->x);
 	}
 
 	template<typename U, size_t Dp = D>
-	std::enable_if_t<Dp == 2, double> angleTo(const Vector<2U, U>& other) const {
+	std::enable_if_t<Dp == 2, double> angleTo(const Vector<2U, U>& other) const noexcept {
 		return std::atan2(other.y - this->y, other.x - this->x);
+	}
+
+	template<typename U, size_t Dp = D>
+	std::enable_if_t<Dp == 2, double> angleFrom(const Vector<2U, U>& other) const noexcept {
+		return std::atan2(this->y - other.y, this->x - other.x);
+	}
+
+	template<size_t Dp = D>
+	std::enable_if_t<Dp == 2, double> pseudoAngleX() const noexcept {
+		auto dx = this->x;
+		auto dy = this->y;
+		return std::copysign(1.0 - dx / (std::fabs(dx) + fabs(dy)), dy);
+	}
+
+	template<size_t Dp = D>
+	std::enable_if_t<Dp == 2, double>
+	pseudoAngleTo(const Vector<2U, T>& other) const noexcept {
+		return (other - *this).pseudoAngleX();
+	}
+
+	template<size_t Dp = D>
+	std::enable_if_t<Dp == 2, double>
+		pseudoAngleFrom(const Vector<2U, T>& other) const noexcept {
+		return (*this - other).pseudoAngleX();
 	}
 
 	Vector<D, T>& normalize() {
@@ -448,12 +472,13 @@ struct Vector : public __vec_member<D, T> {
 		stick.setPosition(offset);
 		stick.setRotation((float)(angleX() * Common::RAD_2_DEG));
 
-		sf::CircleShape triangle{ thick * (2 * std::tanf((float)Common::PI / 3.f)), 3};
+		sf::CircleShape triangle{ 3 * thick * std::tanf((float)Common::PI / 3.f), 3};
 		triangle.setOrigin(triangle.getRadius(), triangle.getRadius());
 		triangle.setRotation(stick.getRotation() + 90);
 		triangle.setPosition(
 			(Vector2f)offset + 
-			(Vector2f::createUnitVector(angleX()) * (float)length() * 0.9f)
+			(Vector2f::createUnitVector(angleX()) * 
+				((float)length() * 0.9f - triangle.getRadius() * (1 - 1 / 3.f)))
 		);
 		
 		stick.setFillColor(color);

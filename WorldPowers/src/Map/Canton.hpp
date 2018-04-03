@@ -52,7 +52,11 @@ public:
 	double getElevation() const noexcept;
 	void setElevation(double elevation) noexcept;
 
+	ID getDownhill() const noexcept;
+
 private:
+
+	void computeDownhill() const noexcept;
 
 	Map* _map{nullptr};
 
@@ -62,7 +66,7 @@ private:
 
 	double _elevation{ 0.0 };
 
-	ID _downhill;
+	mutable ID _downhill;
 	ID _id;
 };
 

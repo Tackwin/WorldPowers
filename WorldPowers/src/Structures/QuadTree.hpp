@@ -162,7 +162,7 @@ public:
 		return results;
 	}
 
-	__declspec(noinline) void noAllocQueryCircle(
+	void noAllocQueryCircle(
 		point p, double r, vector& result, std::vector<const QuadTree<S, T>*>& open
 	) const {
 		if (scope().containedInCircle(p, r)) {

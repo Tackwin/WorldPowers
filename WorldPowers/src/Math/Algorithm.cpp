@@ -17,12 +17,12 @@ std::vector<Vector2d> math::poissonDiscSampling(Vector2d size, double r) {
 	std::default_random_engine rng(SEED);
 	constexpr double sqrt1_2 = 0.7071067811865476;
 
-	u32 k = 10;
+	u32 k = 20;
 	double r2 = r * r;
 	double R = 3 * r2;
 	std::vector<Vector2d> queue;
 	std::vector<Vector2d> poisson;
-	QuadTree<850u, double> quad(Rectangle<double>({ 0, 0 }, size));
+	QuadTree<25u, double> quad(Rectangle<double>({ 0, 0 }, size));
 
 	const auto sample = [&queue, &poisson, &quad](Vector2d p) -> void {
 		queue.push_back(p);
@@ -51,13 +51,13 @@ std::vector<Vector2d> math::poissonDiscSampling(Vector2d size, double r) {
 				double t = std::sqrt(tRange(rng) + r2);
 				auto p = s + t * Vector2d::createUnitVector(a);
 
-				query.resize(0);
-				open.resize(0);
-				quad.noAllocQueryCircle(p, r, query, open);
-
 				if (0 <= p.x && p.x <= size.x &&
 					0 <= p.y && p.y <= size.y
 				) {
+					query.resize(0);
+					open.resize(0);
+					quad.noAllocQueryCircle(p, r, query, open);
+
 					bool flag = true;
 					for (auto q : query) {
 						if (Vector2d::equal(p, q, r)) {
@@ -65,7 +65,9 @@ std::vector<Vector2d> math::poissonDiscSampling(Vector2d size, double r) {
 							break;
 						}
 					}
-					if (flag) sample(p);
+					if (flag) {
+						sample(p);
+					}
 				}
 			}
 
