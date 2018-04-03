@@ -33,6 +33,7 @@ private:
 		float poisson_r = 1.f;
 
 		bool render_elevation = false;
+		bool render_downhilness{ false };
 	} _imgui_data;
 };
 

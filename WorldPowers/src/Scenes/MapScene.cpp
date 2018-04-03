@@ -7,7 +7,6 @@
 #include "imgui.h"
 
 MapScene::MapScene(Game* g, Map* m) : Scene(g), _map(m) {
-
 }
 
 MapScene::~MapScene() {
@@ -41,6 +40,7 @@ void MapScene::updateImGui() {
 	}
 	if (ImGui::CollapsingHeader("Render flags")) {
 		ImGui::Checkbox("Elevation", &_imgui_data.render_elevation);
+		ImGui::Checkbox("Downhill", &_imgui_data.render_downhilness);
 	}
 	ImGui::End();
 
@@ -64,6 +64,8 @@ void MapScene::render(sf::RenderTarget& target) {
 	u08 renderFlags = Map::RenderFlags::VOID;
 	if (_imgui_data.render_elevation)
 		renderFlags |= Map::RenderFlags::ELEVATION;
+	if (_imgui_data.render_downhilness)
+		renderFlags |= Map::RenderFlags::DOWNHILLNESS;
 
 	_map->render(target, (Map::RenderFlags)renderFlags);
 

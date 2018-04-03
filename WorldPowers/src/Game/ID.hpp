@@ -21,6 +21,10 @@ struct ID {
 		return _id < B();
 	}
 
+	constexpr explicit operator bool() const {
+		return _id != NILL();
+	}
+
 	static ID construct() {
 		i64 ns = std::chrono::steady_clock::now().time_since_epoch().count();
 		i64 rand = (i64)Common::xorshift96();

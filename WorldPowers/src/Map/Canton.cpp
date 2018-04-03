@@ -22,6 +22,16 @@ Canton::Canton(Map* map) : _map(map), _id(ID::construct()) {
 
 void Canton::addFrontier(ID id) {
 	_frontiers.emplace(id);
+	auto& i = xstd::other_one_pair(_map->getFrontier(id).cantons, _id);
+	
+	if (! (bool)_downhill) {
+		_downhill = i;
+	} else if (
+		(bool)i && 
+		_map->getCanton(_downhill).getElevation() > _map->getCanton(i).getElevation()
+	) {
+		_downhill = i;
+	}
 }
 
 void Canton::setEdges(const Polygon<double>& edges) {
@@ -35,11 +45,11 @@ void Canton::setSite(Vector2d site) {
 void Canton::render(sf::RenderTarget& target) const {
 	Vector4d in;
 	Vector4d out{ 0.7, 0.7, 0.7, 0.1 };
-	if (_map->getElevation({ _site.x, _site.y }) < 0.0) {
-		in = __colors__[COLORS::WATER];
+	if (getElevation() < 0.1) {
+		in = __colors__[(u32)COLORS::WATER];
 	}
 	else {
-		in = __colors__[COLORS::LAND];
+		in = __colors__[(u32)COLORS::LAND];
 	}
 
 	if (_map->_hovered == this) {
@@ -54,6 +64,14 @@ void Canton::render(sf::RenderTarget& target) const {
 	}
 
 	_edges.render(target, in, out, 0.1f);
+}
+void Canton::renderDownhill(sf::RenderTarget& target) const noexcept {
+	if ((bool)_downhill) {
+		auto dt = (_map->getCanton(_downhill).getSite() - getSite());
+		dt.drawArrow(
+			target, _edges.boundingBox().h * 0.02f, { 0.7, 0.1, 0.1, 0.7 }, getSite()
+		);
+	}
 }
 
 Vector2d Canton::getSite() const {
@@ -74,4 +92,11 @@ bool Canton::is(ID i) const {
 
 ID Canton::id() const {
 	return _id;
+}
+
+double Canton::getElevation() const noexcept {
+	return _elevation;
+}
+void Canton::setElevation(double elevation) noexcept {
+	_elevation = elevation;
 }

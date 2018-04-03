@@ -5,8 +5,8 @@
 #pragma warning(push)
 #pragma warning(disable: 4201)
 
-#define COLOR_UNROLL(x) x.r, x.g, x.b, x.a
-#define XYZW_UNROLL(v) v.x, v.y, v.z, v.w
+#define COLOR_UNROLL(x) (x).r, (x).g, (x).b, (x).a
+#define XYZW_UNROLL(v) (v).x, (v).y, (v).z, (v).w
 
 template<size_t D, typename T>
 struct __vec_member {
@@ -438,6 +438,29 @@ struct Vector : public __vec_member<D, T> {
 		circle.setOutlineColor(outline);
 		circle.setOutlineThickness(thick);
 		target.draw(circle);
+	}
+
+	void drawArrow(
+		sf::RenderTarget& target, float thick, Vector4d color, Vector2<T> offset = { 0, 0 }
+	) const noexcept {
+		sf::RectangleShape stick{ sf::Vector2f{(float)length() * 0.9f, thick * 2} };
+		stick.setOrigin(0, thick);
+		stick.setPosition(offset);
+		stick.setRotation((float)(angleX() * Common::RAD_2_DEG));
+
+		sf::CircleShape triangle{ thick * (2 * std::tanf((float)Common::PI / 3.f)), 3};
+		triangle.setOrigin(triangle.getRadius(), triangle.getRadius());
+		triangle.setRotation(stick.getRotation() + 90);
+		triangle.setPosition(
+			(Vector2f)offset + 
+			(Vector2f::createUnitVector(angleX()) * (float)length() * 0.9f)
+		);
+		
+		stick.setFillColor(color);
+		triangle.setFillColor(color);
+
+		target.draw(stick);
+		target.draw(triangle);
 	}
 
 #endif

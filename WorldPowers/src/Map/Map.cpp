@@ -1,6 +1,7 @@
 #include "Map.hpp"
 
 #include <algorithm>
+#include <set>
 
 #include "./../Game/ID.hpp"
 #include "./../Math/Algorithm.hpp"
@@ -21,11 +22,13 @@ void Map::build(double poisson_r) {
 	if (isBuilded()) {
 		clear();
 	}
+	_info.builded = true;
+
 	generateVoronoi(poisson_r);
 	generateNoise();
 
-	_info.builded = true;
 	computeTextureElevation(1);
+	computeElevation();
 }
 
 void Map::render(sf::RenderTarget& target, Map::RenderFlags flag) const {
@@ -33,11 +36,7 @@ void Map::render(sf::RenderTarget& target, Map::RenderFlags flag) const {
 
 	target.setView(_view);
 
-	Rectangle2<double> scope;
-	scope.x = (double)_view.getCenter().x - _view.getSize().x / 2.0;
-	scope.y = (double)_view.getCenter().y - _view.getSize().y / 2.0;
-	scope.w = (double)_view.getSize().x;
-	scope.h = (double)_view.getSize().y;
+	auto scope = getScreenRec();
 
 	sf::CircleShape pointShape(0.2f);
 	pointShape.setOrigin(0.2f, 0.2f);
@@ -62,14 +61,10 @@ void Map::render(sf::RenderTarget& target, Map::RenderFlags flag) const {
 		auto A = _hovered->getSite();
 		for (auto& f : _hovered->getFrontiers()) {
 			auto cantons = _info.frontiers.at(f).cantons;
-			auto n = std::find_if(std::begin(cantons), std::end(cantons), 
-				[&](const auto& A) -> bool {
-					return A != _hovered->id();
-				}
-			);
+			ID n = xstd::other_one_pair(cantons, _hovered->id());
 
 			auto B = std::find_if(std::begin(_info.cantons), std::end(_info.cantons),
-				[n](const auto& A) -> bool { return A.second.is(*n); }
+				[n](const auto& A) -> bool { return A.second.is(n); }
 			);
 			if (B == std::end(_info.cantons)) continue;
 
@@ -80,10 +75,26 @@ void Map::render(sf::RenderTarget& target, Map::RenderFlags flag) const {
 	if (flag & RenderFlags::ELEVATION) {
 		renderElevation(target);
 	}
+	if (flag & RenderFlags::DOWNHILLNESS) {
+		renderDownhill(target);
+	}
 
 	scope.render(target, { 0, 0, 1, 0.1 }, { 1, 1, 0, 1 }, 5);
 
 	target.setView(oldView);
+}
+
+void Map::renderDownhill(sf::RenderTarget& target) const noexcept {
+	auto scope = getScreenRec();
+
+	for (auto& [_, c] : _info.cantons) {
+		_;
+
+		if (!(c.getEdges().inRect(scope) || c.getEdges().interesctRect(scope))) continue;
+		if (_hovered == &c) continue;
+
+		c.renderDownhill(target);
+	}
 }
 
 void Map::renderElevation(sf::RenderTarget& target) const {
@@ -156,8 +167,8 @@ void Map::generateVoronoi(double r) {
 		auto A = tripointMapIndex.at(Vector2d{ edge->pos[0].x, edge->pos[0].y });
 		auto B = tripointMapIndex.at(Vector2d{ edge->pos[1].x, edge->pos[1].y });
 
-		F.tripoints.emplace(A);
-		F.tripoints.emplace(B);
+		F.tripoints.first = A;
+		F.tripoints.second = B;
 
 		tripontsToFrontierMap[std::minmax({A, B})] = F.id;
 
@@ -170,10 +181,10 @@ void Map::generateVoronoi(double r) {
 	}
 
 	for (i32 i = 0; i < _info.diagram.numsites; ++i) {
-		std::unordered_set<Vector2d> ver;
 		Canton c(this);
 
 		auto s = &sites[i];
+		std::unordered_set<Vector2d> ver;
 		c.setSite({ s->p.x, s->p.y });
 
 		auto const* e = s->edges;
@@ -187,18 +198,28 @@ void Map::generateVoronoi(double r) {
 
 			_info.tripoints.at(Aid).cantons.emplace(c.id());
 			_info.tripoints.at(Bid).cantons.emplace(c.id());
-			_info.frontiers.at(Fid).cantons.emplace(c.id());
+			
+			auto& F = _info.frontiers.at(Fid).cantons;
+			if (F.first == c.id() || F.second == c.id()) {}
+			else if ((bool)F.first) {
+				F.second = c.id();
+			}
+			else {
+				F.first = c.id();
+			}
 
-			ver.emplace(A);
-			ver.emplace(B);
+			ver.insert(A);
+			ver.insert(B);
 			c.addFrontier(Fid);
 			e = e->next;
 		}
 
-		c.setEdges(Polygon<double>(std::vector<Vector2d>(std::begin(ver), std::end(ver))));
+		Polygon<double> p(std::vector<Vector2d>(std::begin(ver), std::end(ver)));
+		c.setEdges(p);
 
 		_info.cantons[c.id()] = c;
 	}
+	printf("");
 }
 
 void Map::generateNoise() {
@@ -295,4 +316,28 @@ Vector2d Map::screenToMap(Vector2d p) const {
 	normalized.y = +1.0 - 2.0 * (scaledP.y - viewport.top) / viewport.height;
 
 	return Vector2d(_view.getInverseTransform().transformPoint(normalized));
+}
+
+void Map::computeElevation() noexcept {
+	for (auto&[_, c] : _info.cantons) {_;
+		auto e = getElevation(c.getSite());
+		c.setElevation(e);
+	}
+}
+
+const Canton& Map::getCanton(ID id) const {
+	return _info.cantons.at(id);
+}
+const Frontier& Map::getFrontier(ID id) const {
+	return _info.frontiers.at(id);
+}
+
+Rectangle2d Map::getScreenRec() const noexcept {
+	Rectangle2<double> scope;
+	scope.x = (double)_view.getCenter().x - _view.getSize().x / 2.0;
+	scope.y = (double)_view.getCenter().y - _view.getSize().y / 2.0;
+	scope.w = (double)_view.getSize().x;
+	scope.h = (double)_view.getSize().y;
+
+	return scope;
 }

@@ -25,7 +25,8 @@ public:
 
 	enum RenderFlags : u08 {
 		VOID = 0,
-		ELEVATION = 1
+		ELEVATION = 1,
+		DOWNHILLNESS = ELEVATION << 1
 	};
 
 	Map(Vector2d size);
@@ -45,7 +46,11 @@ public:
 
 	bool isBuilded() const;
 
+	Rectangle2d getScreenRec() const noexcept;
 	Vector2d screenToMap(Vector2d p) const;
+
+	const Canton& getCanton(ID id) const;
+	const Frontier& getFrontier(ID id) const;
 private:
 
 	void clear();
@@ -53,7 +58,10 @@ private:
 	void generateVoronoi(double r);
 	void generateNoise();
 
+	void computeElevation() noexcept;
 	void computeTextureElevation(double LOD);
+
+	void renderDownhill(sf::RenderTarget& target) const noexcept;
 	void renderElevation(sf::RenderTarget& target) const;
 
 	struct Info {

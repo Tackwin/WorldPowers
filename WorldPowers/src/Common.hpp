@@ -26,6 +26,9 @@ namespace Common {
 	constexpr u64 SEED = 2;
 	constexpr double PI = 3.141592653589793;
 
+	constexpr double DEG_2_RAD = PI / 180.0;
+	constexpr double RAD_2_DEG = 1 / DEG_2_RAD;
+
 	template<typename T>
 	constexpr inline u32 hash_combine_vector(u32 seed, const T* v, u32 n) {
 		if (n == 0) return seed;
@@ -68,4 +71,15 @@ namespace std {
 			return Common::hash_combine(A, B);
 		}
 	};
+}
+
+namespace xstd {
+	template<typename T>
+	constexpr T& other_one_pair(std::pair<T, T>& p, const T& a) noexcept {
+		return p.first == a ? p.second : p.first;
+	}
+	template<typename T>
+	constexpr const T& other_one_pair(const std::pair<T, T>& p, const T& a) noexcept {
+		return p.first == a ? p.second : p.first;
+	}
 }

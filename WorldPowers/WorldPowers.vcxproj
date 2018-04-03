@@ -146,6 +146,8 @@
     <ClCompile Include="src\3rd\jc_voronoi.c" />
     <ClCompile Include="src\Common.cpp" />
     <ClCompile Include="src\Data\Datum.cpp" />
+    <ClCompile Include="src\Game\ID.cpp" />
+    <ClCompile Include="src\Graphics\CachedTexture.cpp" />
     <ClCompile Include="src\Map\Canton.cpp" />
     <ClCompile Include="src\Math\Polygon.cpp" />
     <ClCompile Include="src\Scenes\MapScene.cpp" />
@@ -168,6 +170,7 @@
     <ClInclude Include="src\3rd\jc_voronoi.h" />
     <ClInclude Include="src\Data\Datum.hpp" />
     <ClInclude Include="src\Game\ID.hpp" />
+    <ClInclude Include="src\Graphics\CachedTexture.hpp" />
     <ClInclude Include="src\Map\Canton.hpp" />
     <ClInclude Include="src\Math\Polygon.hpp" />
     <ClInclude Include="src\Scenes\MapScene.hpp" />
@@ -210,6 +213,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-tidy" />
+    <None Include=".gitignore" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

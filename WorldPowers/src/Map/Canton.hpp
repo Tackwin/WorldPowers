@@ -14,12 +14,28 @@ struct Frontier;
 struct Tripoint;
 
 class Canton {
+private:
+	static const Vector4d __colors__[];
+public:
+	enum class COLORS : u32 {
+		WATER,
+		LAND,
+		MEDIUM_MONTAINS,
+		TOP_MONTAINS,
+		SIZE
+	};
+	enum class GROUP : u32 {
+		WATER,
+		LAND
+	};
+
 public:
 
 	Canton();
 	Canton(Map* map);
 
 	void render(sf::RenderTarget& target) const;
+	void renderDownhill(sf::RenderTarget& target) const noexcept;
 
 	void addFrontier(ID id);
 
@@ -33,17 +49,10 @@ public:
 	bool is(ID i) const;
 	ID id() const;
 
+	double getElevation() const noexcept;
+	void setElevation(double elevation) noexcept;
+
 private:
-
-	enum COLORS : u32 {
-		WATER,
-		LAND,
-		MEDIUM_MONTAINS,
-		TOP_MONTAINS,
-		SIZE
-	};
-
-	static const Vector4d __colors__[];
 
 	Map* _map{nullptr};
 
@@ -51,14 +60,17 @@ private:
 	Polygon<double> _edges;
 	Vector2d _site;
 
+	double _elevation{ 0.0 };
+
+	ID _downhill;
 	ID _id;
 };
 
 struct Frontier {
 	Frontier();
 
-	std::unordered_set<ID> cantons;
-	std::unordered_set<ID> tripoints;
+	std::pair<ID, ID> cantons;
+	std::pair<ID, ID> tripoints;
 
 	ID id;
 };

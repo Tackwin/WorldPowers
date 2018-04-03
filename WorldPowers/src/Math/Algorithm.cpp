@@ -38,8 +38,8 @@ std::vector<Vector2d> math::poissonDiscSampling(Vector2d size, double r) {
 	decltype(quad)::vector query;
 	std::vector<const decltype(quad)*> open;
 
-	query.reserve((u32)std::floor((size.x / r) * (size.y / r) * 2));
-	open.reserve(quad.nNodes());
+	query.reserve((u32)std::ceil((size.x / r) * (size.y / r) * 1.5));
+	open.reserve(query.size() / decltype(quad)::_S);
 
 	while (true) {
 		while (!queue.empty()) {

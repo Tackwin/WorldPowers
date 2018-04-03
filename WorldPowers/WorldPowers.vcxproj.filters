@@ -84,6 +84,12 @@
     <ClCompile Include="src\Map\Canton.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="src\Graphics\CachedTexture.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Game\ID.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Managers\AssetsManager.hpp">
@@ -215,8 +221,12 @@
     <ClInclude Include="src\Map\Canton.hpp">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="src\Graphics\CachedTexture.hpp">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-tidy" />
+    <None Include=".gitignore" />
   </ItemGroup>
 </Project>

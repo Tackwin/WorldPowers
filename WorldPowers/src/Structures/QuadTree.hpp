@@ -10,6 +10,9 @@
 template<size_t S, typename T>
 class QuadTree {
 public:
+	using _T = T;
+	static constexpr size_t _S = S;
+
 	using vector = std::vector<Vector<2U, T>>;
 	using point = Vector<2U, T>;
 	using rec = Rectangle<T>;
@@ -159,13 +162,13 @@ public:
 		return results;
 	}
 
-	void noAllocQueryCircle(
+	__declspec(noinline) void noAllocQueryCircle(
 		point p, double r, vector& result, std::vector<const QuadTree<S, T>*>& open
 	) const {
 		if (scope().containedInCircle(p, r)) {
 			result.insert(std::end(result), std::begin(_items), std::begin(_items) + _size);
 		}
-		
+
 		open.push_back(this);
 
 		while (!open.empty()) {
@@ -203,7 +206,7 @@ public:
 					open.push_back(q->d());
 				}
 			}
-			else if (q->scope().circleIntersect(p, r) ){
+			else if (q->scope().circleIntersect(p, r)) {
 				const auto& g = q->array();
 				result.insert(std::end(result), &g[0], &g[0] + q->size());
 			}

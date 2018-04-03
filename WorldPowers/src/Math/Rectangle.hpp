@@ -149,4 +149,5 @@ struct Rectangle {
 template<typename T>
 using Rectangle2 = Rectangle<T>;
 using Rectangle2f = Rectangle2<float>;
+using Rectangle2d = Rectangle2<double>;
 #pragma warning(pop)
