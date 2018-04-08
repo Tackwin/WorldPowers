@@ -35,7 +35,7 @@ void Canton::setSite(Vector2d site) {
 void Canton::render(sf::RenderTarget& target) const {
 	Vector4d in;
 	Vector4d out{ 0.7, 0.7, 0.7, 0.1 };
-	if (getElevation() < 0.1) {
+	if (isWater()) {
 		in = __colors__[(u32)COLORS::WATER];
 	}
 	else {
@@ -89,6 +89,7 @@ double Canton::getElevation() const noexcept {
 }
 void Canton::setElevation(double elevation) noexcept {
 	_elevation = elevation;
+	_isWater = _elevation < 0.5;
 }
 void Canton::computeDownhill() const noexcept {
 	if (_frontiers.empty()) return;
@@ -107,4 +108,7 @@ void Canton::computeDownhill() const noexcept {
 ID Canton::getDownhill() const noexcept {
 	if (!_downhill) computeDownhill();
 	return _downhill;
+}
+bool Canton::isWater() const noexcept {
+	return _isWater;
 }

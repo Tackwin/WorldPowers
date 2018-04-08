@@ -57,6 +57,8 @@ private:
 
 	void generateVoronoi(double r);
 	void generateNoise();
+	void generateRivers(u32 n);
+	void generateRiverFrom(ID tripoint);
 
 	void computeTextureElevation(double LOD);
 
@@ -73,8 +75,12 @@ private:
 		std::unordered_map<ID, Tripoint> tripoints;
 
 		u32 noiseSeed;
-		std::vector<std::tuple<FastNoise::NoiseType, double, double>> weights;
+		std::vector<
+			std::tuple<FastNoise::NoiseType, double, u32, double, double, double>
+		> weights;
 	} _info;
+
+
 
 	sf::View _view;
 
@@ -82,6 +88,8 @@ private:
 
 	sf::Texture _elevationTexture;
 	Canton* _hovered{ nullptr };
+
+	std::vector<ID> _tripointsVectors;
 
 	friend class Canton;
 };

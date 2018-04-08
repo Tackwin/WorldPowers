@@ -54,11 +54,15 @@ public:
 
 	ID getDownhill() const noexcept;
 
+	bool isWater() const noexcept;
+
 private:
 
 	void computeDownhill() const noexcept;
 
-	Map* _map{nullptr};
+	bool _isWater{ false };
+
+	Map* _map{ nullptr };
 
 	std::unordered_set<ID> _frontiers;
 	Polygon<double> _edges;
@@ -77,6 +81,8 @@ struct Frontier {
 	std::pair<ID, ID> tripoints;
 
 	ID id;
+
+	bool river{ false };
 };
 
 struct Tripoint {
@@ -86,6 +92,8 @@ struct Tripoint {
 
 	std::unordered_set<ID> frontiers;
 	std::unordered_set<ID> cantons;
+
+	bool river{ false };
 
 	ID id;
 };

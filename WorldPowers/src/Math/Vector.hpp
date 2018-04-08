@@ -368,7 +368,7 @@ struct Vector : public __vec_member<D, T> {
 			r += ' ';
 			r += std::to_string(this->components[i]);
 		}
-		return r + '\n';
+		return r;
 	}
 
 	//SFML compatibility stuff

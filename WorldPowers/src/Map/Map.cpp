@@ -28,6 +28,7 @@ void Map::build(double poisson_r) {
 
 	generateNoise();
 	generateVoronoi(poisson_r);
+	generateRivers(10);
 
 	computeTextureElevation(1);
 	std::cout << perf.elapsed() << std::endl;
@@ -122,7 +123,11 @@ void Map::update(dt_t) {
 }
 
 void Map::generateVoronoi(double r) {
+	Clock cl;
+
 	auto vertices = math::poissonDiscSampling(_info.size, r);
+
+	std::cout << "disk sampling: " << cl.reset() << std::endl;
 
 	std::vector<jcv_point> ps(vertices.size());
 	for (size_t i = 0; i < vertices.size(); ++i) {
@@ -141,8 +146,11 @@ void Map::generateVoronoi(double r) {
 		&_info.diagram
 	);
 
+	std::cout << "voronoi: " << cl.reset() << std::endl;
+
 	auto sites = jcv_diagram_get_sites(&_info.diagram);
 
+	_tripointsVectors.reserve(2 * vertices.size());
 	std::unordered_map<Vector2d, ID> tripointMapIndex;
 	std::unordered_map<std::pair<ID, ID>, ID> tripontsToFrontierMap;
 
@@ -150,9 +158,20 @@ void Map::generateVoronoi(double r) {
 	while (edge) {
 		Tripoint A;
 		Tripoint B;
+		Frontier F;
 
 		A.pos = Vector2d{ edge->pos[0].x, edge->pos[0].y }.round(0.00001);
 		B.pos = Vector2d{ edge->pos[1].x, edge->pos[1].y }.round(0.00001);
+
+		F.tripoints.first = A.id;
+		F.tripoints.second = B.id;
+
+		A.frontiers.emplace(F.id);
+		B.frontiers.emplace(F.id);
+
+		tripontsToFrontierMap.emplace(std::minmax({ A.id, B.id }), F.id);
+
+		_info.frontiers.emplace(F.id, F);
 
 		tripointMapIndex.emplace(A.pos, A.id);
 		tripointMapIndex.emplace(B.pos, B.id);
@@ -160,12 +179,15 @@ void Map::generateVoronoi(double r) {
 		_info.tripoints.emplace(A.id, A);
 		_info.tripoints.emplace(B.id, B);
 
+		_tripointsVectors.emplace_back(A.id);
+		_tripointsVectors.emplace_back(B.id);
+
 		edge = edge->next;
 	}
+	std::cout << "tripoints: " << cl.reset() << std::endl;
 
 	edge = jcv_diagram_get_edges(&_info.diagram);
 	while (edge) {
-		Frontier F;
 		auto A = tripointMapIndex.at(
 			Vector2d{ edge->pos[0].x, edge->pos[0].y }.round(0.00001)
 		);
@@ -173,18 +195,23 @@ void Map::generateVoronoi(double r) {
 			Vector2d{ edge->pos[1].x, edge->pos[1].y }.round(0.00001)
 		);
 
-		F.tripoints.first = A;
-		F.tripoints.second = B;
+		if (tripontsToFrontierMap.count(std::minmax({ A, B })) == 0) {
+			Frontier F;
 
-		tripontsToFrontierMap.emplace(std::minmax({A, B}), F.id);
+			F.tripoints.first = A;
+			F.tripoints.second = B;
 
-		_info.frontiers.emplace(F.id, F);
+			tripontsToFrontierMap.emplace(std::minmax({ A, B }), F.id);
 
-		_info.tripoints.at(A).frontiers.emplace(F.id);
-		_info.tripoints.at(B).frontiers.emplace(F.id);
+			_info.frontiers.emplace(F.id, F);
+
+			_info.tripoints.at(A).frontiers.emplace(F.id);
+			_info.tripoints.at(B).frontiers.emplace(F.id);
+		}
 
 		edge = edge->next;
 	}
+	std::cout << "frontiers: " << cl.reset() << std::endl;
 
 	for (i32 i = 0; i < _info.diagram.numsites; ++i) {
 		Canton c(this);
@@ -207,7 +234,7 @@ void Map::generateVoronoi(double r) {
 
 			auto Aid = tripointMapIndex.at(A);
 			auto Bid = tripointMapIndex.at(B);
-			auto Fid = tripontsToFrontierMap.at(std::minmax({ Aid, Bid }));
+			auto Fid = tripontsToFrontierMap.at((std::minmax({ Aid, Bid })));
 
 			_info.tripoints.at(Aid).cantons.emplace(c.id());
 			_info.tripoints.at(Bid).cantons.emplace(c.id());
@@ -236,17 +263,22 @@ void Map::generateVoronoi(double r) {
 
 		_info.cantons[c.id()] = c;
 	}
+	std::cout << "cantons: " << cl.reset() << std::endl;
+
+	std::cout << std::endl
+		<< "#Cantons: " << _info.cantons.size() << std::endl
+		<< "#Frontiers: " << _info.frontiers.size() << std::endl
+		<< "#Tripoints: " << _info.tripoints.size() << std::endl;
 }
 
 void Map::generateNoise() {
 	_info.noiseSeed = (u32)time((time_t*)0);
 	_noise.SetSeed(_info.noiseSeed);
 	_info.weights = {
-		{FastNoise::Simplex, 0.005, 0.2},
-		{FastNoise::Simplex, 0.003, 0.35},
-		{FastNoise::Simplex, 0.001, 0.25},
-		{FastNoise::Perlin, 0.01, 0.1},
-		{FastNoise::Perlin, 0.05, 0.1}
+		{FastNoise::CubicFractal, 0.006, 9, 1.2, 0.9, 0.4},
+		{FastNoise::CubicFractal, 0.006, 9, 1.2, 0.9, 0.4},
+		{FastNoise::CubicFractal, 0.025, 6, 1.2, 0.9, 0.1},
+		{FastNoise::CubicFractal, 0.040, 9, 1.2, 0.9, 0.1},
 	};
 }
 
@@ -296,23 +328,33 @@ double Map::getElevation(Vector2d p) const {
 	if (!_info.builded) return 0.0;
 
 	double sum = 0.0;
-	for (auto&[T, f, w] : _info.weights) {
+	for (auto&[T, f, o, l, g, w] : _info.weights) {
 		_noise.SetNoiseType(T);
 		_noise.SetFrequency(f);
+		_noise.SetFractalOctaves(o);
+		_noise.SetFractalLacunarity(l);
+		_noise.SetFractalGain(g);
 		switch (T)
 		{
 		case FastNoise::Simplex:
-			sum += w * atan(3 * _noise.GetSimplex(p.x, p.y));
+			sum += w * _noise.GetSimplex(p.x, p.y);
 			break;
 		case FastNoise::Perlin:
-			sum += w * atan(3 * _noise.GetPerlin(p.x, p.y));
+			sum += w * _noise.GetPerlin(p.x, p.y);
+			break;
+		case FastNoise::CubicFractal:
+			sum += w * _noise.GetCubicFractal(p.x, p.y);
 			break;
 		default:
 			break;
 		}
 	}
 
-	return 2 * sum / Common::PI;
+	auto sig = [](auto x) -> auto {
+		return 1 / (1 + std::exp(-15 * x));
+	};
+
+	return sig(sum);
 }
 
 Vector2d Map::screenToMap(Vector2d p) const {
@@ -349,4 +391,59 @@ Rectangle2d Map::getScreenRec() const noexcept {
 	scope.h = (double)_view.getSize().y;
 
 	return scope;
+}
+
+void Map::generateRivers(u32 n) {
+	std::default_random_engine rng{ (u32)Common::SEED };
+	std::uniform_int_distribution<u32> dist{ 0, _tripointsVectors.size() - 1};
+	for (u32 i = 0; i < n; ++i) {
+
+		ID id;
+		double el{ 0.0 };
+		do {
+			u32 j = dist(rng);
+			id = _tripointsVectors[j];
+			el = getElevation(_info.tripoints[id].pos);
+		} while (el < 0.75);
+
+		generateRiverFrom(id);
+	}
+}
+
+void Map::generateRiverFrom(ID tripoint) {
+
+	auto isNextToWater = [&](ID tripoint) -> bool {
+		for (auto& id : _info.tripoints[tripoint].cantons) {
+			if (_info.cantons[id].isWater()) return true;
+		}
+		return false;
+	};
+
+	auto getDownhillFrontier = [&](ID tripointId) -> ID {
+		auto lowest = ID::NILL;
+
+		for (auto& id : _info.tripoints[tripointId].frontiers) {
+			auto otherId = xstd::other_one_pair(_info.frontiers[id].tripoints, tripointId);
+
+			if (lowest ||
+					getElevation(_info.tripoints[otherId].pos) <
+					getElevation(_info.tripoints[lowest].pos)
+				) {
+				lowest = otherId;
+			}
+		}
+
+		return lowest;
+	};
+
+	ID down = tripoint;
+	while (!isNextToWater(down)) {
+		_info.tripoints[down].river = true;
+
+		auto frontier = getDownhillFrontier(down);
+		_info.frontiers[frontier].river = true;
+
+		std::cout << getElevation(_info.tripoints[down].pos) << std::endl;
+		down = xstd::other_one_pair(_info.frontiers[frontier].tripoints, down);
+	}
 }
